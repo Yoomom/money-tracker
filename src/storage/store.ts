@@ -1,5 +1,5 @@
 import type { Config, Month } from '../domain/types';
-import { apply, describe, emptyData, monthPath, pathsOf, type Action, type Data } from './actions';
+import { apply, contentOf, describe, emptyData, monthPath, pathsOf, type Action, type Data } from './actions';
 import { cache, type Files } from './cache';
 import { AuthError, ConflictError, GitHubClient, NetworkError, type Conn } from './github';
 
@@ -80,6 +80,7 @@ export class Store {
       try {
         if (path === 'config.json') d.config = JSON.parse(f.content);
         else if (path.startsWith('months/')) { const m: Month = JSON.parse(f.content); d.months[m.id] = m; }
+        else if (path.startsWith('chats/')) { const c = JSON.parse(f.content); d.chats[c.id] = c; }
       } catch { /* skip unreadable file */ }
     }
     return d;
@@ -95,7 +96,8 @@ export class Store {
       const listing = await this.client.list('months');
       const files: Files = {};
       if (cfg) files['config.json'] = cfg;
-      for (const f of listing.filter((x) => /^\d{4}-\d{2}\.json$/.test(x.name))) {
+      const chatListing = await this.client.list('chats');
+      for (const f of [...listing, ...chatListing].filter((x) => /^\d{4}-\d{2}\.json$/.test(x.name))) {
         const have = this.baseFiles[f.path];
         files[f.path] = have && have.sha === f.sha ? have : (await this.client.getFile(f.path)) ?? have;
         if (!files[f.path]) delete files[f.path];
@@ -141,8 +143,8 @@ export class Store {
       const after = batch.reduce(apply, this.base);
       const paths = [...new Set(batch.flatMap(pathsOf))];
       for (const path of paths) {
-        const content = path === 'config.json' ? json(after.config) : json(after.months[path.slice(7, -5)]);
-        const msgs = batch.filter((a) => pathsOf(a).includes(path)).map(describe);
+        const content = json(contentOf(after, path));
+        const msgs = [...new Set(batch.filter((a) => pathsOf(a).includes(path)).map(describe))];
         const message = msgs[msgs.length - 1] + (msgs.length > 1 ? ` (+${msgs.length - 1} more)` : '');
         await this.putWithRetry(path, content, message, batch);
       }
@@ -171,7 +173,7 @@ export class Store {
       const fresh = await client.getFile(path);
       if (fresh) this.baseFiles[path] = fresh; else delete this.baseFiles[path];
       const merged = batch.reduce(apply, this.parseFiles(this.baseFiles));
-      const content2 = path === 'config.json' ? json(merged.config) : json(merged.months[path.slice(7, -5)]);
+      const content2 = json(contentOf(merged, path));
       const sha = await client.putFile(path, content2, message, fresh?.sha);
       this.baseFiles[path] = { content: content2, sha };
     }

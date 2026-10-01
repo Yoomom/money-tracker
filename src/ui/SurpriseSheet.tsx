@@ -30,7 +30,7 @@ export function SurpriseSheet({ onClose }: { onClose: () => void }) {
     const s = { id: newId('sp'), date, what: what.trim(), rm: round2(rm!), paidFrom: from, emergency: isEmergency ? real : false };
     store.dispatch({ type: 'logSurprise', m: curId, s });
     if (fund) {
-      const after = apply({ config, months: snap.data.months }, { type: 'logSurprise', m: curId, s });
+      const after = apply(snap.data, { type: 'logSurprise', m: curId, s });
       const list = Object.values(after.months);
       toast(`${fund.name} now ${fmtRM(fundBalance(fund, list))}`);
     } else toast(from === 'unassigned' ? 'Logged — assign it later to clear the leak' : 'Logged');

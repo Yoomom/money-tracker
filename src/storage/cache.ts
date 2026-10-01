@@ -17,5 +17,8 @@ export const cache = {
   setFiles: (f: Files) => safe(() => set('files', f, store), undefined),
   getPending: () => safe(async () => (await get<unknown[]>('pending', store)) ?? [], [] as unknown[]),
   setPending: (p: unknown[]) => safe(() => set('pending', p, store), undefined),
-  clearAll: async () => { await Promise.all(['conn', 'files', 'pending'].map((k) => safe(() => del(k, store), undefined))); },
+  getKV: <T>(key: string) => safe(() => get<T>(`kv:${key}`, store), undefined),
+  setKV: (key: string, v: unknown) => safe(() => set(`kv:${key}`, v, store), undefined),
+  delKV: (key: string) => safe(() => del(`kv:${key}`, store), undefined),
+  clearAll: async () => { await Promise.all(['conn', 'files', 'pending', 'kv:ask-settings', 'kv:ask-spend'].map((k) => safe(() => del(k, store), undefined))); },
 };

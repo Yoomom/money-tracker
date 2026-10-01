@@ -8,6 +8,7 @@ import { resolveAll, totalPlanned, unallocated } from '../domain/plan';
 import { DEFAULT_CLASSIFIER, KIND_ORDER } from '../import/classify';
 import { KIND_LABEL } from '../import/build';
 import { validateConfig } from './ImportScreen';
+import { AskSettings } from './AskSettings';
 import type { AmountRule, Config, Fund, PlanItem } from '../domain/types';
 
 export function PlanScreen({ onImport }: { onImport: () => void }) {
@@ -151,6 +152,9 @@ export function PlanScreen({ onImport }: { onImport: () => void }) {
         <ConnectForm />
         {snap.conn && <button className="danger" style={{ width: '100%', marginTop: 8 }} onClick={() => confirm('Remove token and cached data from this device?') && store.disconnect()}>Disconnect this device</button>}
       </div>
+
+      <h2>Ask (Claude)</h2>
+      <div className="card"><AskSettings /></div>
 
       <h2>Your data</h2>
       <div className="card">

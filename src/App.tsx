@@ -11,12 +11,13 @@ import { PlanScreen } from './ui/PlanScreen';
 import { SurpriseSheet } from './ui/SurpriseSheet';
 import { ReviewScreen } from './ui/ReviewScreen';
 import { HistoryScreen } from './ui/HistoryScreen';
+import { AskScreen } from './ui/AskScreen';
 
-type Tab = 'month' | 'payday' | 'funds' | 'plan';
+type Tab = 'month' | 'payday' | 'funds' | 'ask' | 'plan';
 type Overlay = null | 'review' | 'history' | 'import' | 'surprise';
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'month', label: 'Month', icon: '◔' }, { id: 'payday', label: 'Payday', icon: '☑' },
-  { id: 'funds', label: 'Funds', icon: '◈' }, { id: 'plan', label: 'Plan', icon: '⚙' },
+  { id: 'funds', label: 'Funds', icon: '◈' }, { id: 'ask', label: 'Ask', icon: '✦' }, { id: 'plan', label: 'Plan', icon: '⚙' },
 ];
 
 export default function App() {
@@ -62,6 +63,7 @@ export default function App() {
         {tab === 'month' && <MonthScreen onReview={() => setOverlay('review')} onHistory={() => setOverlay('history')} />}
         {tab === 'payday' && <PaydayScreen />}
         {tab === 'funds' && <FundsScreen />}
+        {tab === 'ask' && <AskScreen />}
         {tab === 'plan' && <PlanScreen onImport={() => setOverlay('import')} />}
       </main>
       {(tab === 'month' || tab === 'funds') && month?.status === 'open' && (

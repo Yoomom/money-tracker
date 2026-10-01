@@ -52,4 +52,5 @@ export interface Month {
   income: IncomeEntry[]; items: MonthItem[]; surprises: Surprise[]; movements: Movement[];
   checks: { cardPaidInFull?: boolean; experienceLogged?: boolean };
   review?: { notes: string; health: HealthResult[]; closedAt: string };
+  notes?: { id: string; date: string; text: string }[];
 }

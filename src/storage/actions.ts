@@ -5,10 +5,11 @@ import {
 } from '../domain/month';
 import { fmtRMshort, uid } from '../domain/util';
 
-export interface Data { config: Config | null; months: Record<string, Month> }
-export const emptyData = (): Data => ({ config: null, months: {} });
+export interface ChatFile { id: string; threads: unknown[] }
+export interface Data { config: Config | null; months: Record<string, Month>; chats: Record<string, ChatFile> }
+export const emptyData = (): Data => ({ config: null, months: {}, chats: {} });
 
-export type Action =
+type ActionBase =
   | { type: 'setConfig'; config: Config; message: string; applyToMonth?: string }
   | { type: 'openMonth'; id: string; salary?: number }
   | { type: 'tick'; m: string; itemId: string; actual?: number; date: string }
@@ -25,7 +26,13 @@ export type Action =
   | { type: 'deleteMovement'; m: string; id: string }
   | { type: 'setChecks'; m: string; checks: Month['checks'] }
   | { type: 'close'; m: string; sweepRm: number; notes: string; closedAt: string }
-  | { type: 'putMonth'; month: Month };
+  | { type: 'putMonth'; month: Month }
+  | { type: 'addNote'; m: string; id: string; date: string; text: string }
+  | { type: 'restoreData'; config?: Config; months: Record<string, Month>; label?: string }
+  | { type: 'putChats'; file: ChatFile };
+
+/** `label` overrides the commit message (e.g. "chat: …"). */
+export type Action = ActionBase & { label?: string };
 
 export const newId = uid;
 
@@ -79,6 +86,9 @@ export function apply(d: Data, a: Action): Data {
     case 'close': return withMonth(d, a.m, (m, c) =>
       closeMonth(m, c, Object.values(d.months), { sweepRm: a.sweepRm, notes: a.notes, closedAt: a.closedAt }));
     case 'putMonth': return { ...d, months: { ...d.months, [a.month.id]: a.month } };
+    case 'addNote': return withMonth(d, a.m, (m) => ({ ...m, notes: [...(m.notes ?? []), { id: a.id, date: a.date, text: a.text }] }));
+    case 'restoreData': return { ...d, config: a.config ?? d.config, months: { ...d.months, ...a.months } };
+    case 'putChats': return { ...d, chats: { ...d.chats, [a.file.id]: a.file } };
     default: return d;
   }
 }
@@ -89,12 +99,24 @@ export function pathsOf(a: Action): string[] {
     case 'setConfig': return a.applyToMonth ? ['config.json', monthPath(a.applyToMonth)] : ['config.json'];
     case 'openMonth': return [monthPath(a.id)];
     case 'putMonth': return [monthPath(a.month.id)];
+    case 'addNote': return [monthPath(a.m)];
+    case 'restoreData': return [...(a.config ? ['config.json'] : []), ...Object.keys(a.months).map(monthPath)];
+    case 'putChats': return [chatPath(a.file.id)];
     default: return [monthPath(a.m)];
   }
 }
 export const monthPath = (id: string) => `months/${id}.json`;
+export const chatPath = (id: string) => `chats/${id}.json`;
+
+/** JSON content of a data file after edits. */
+export function contentOf(d: Data, path: string): unknown {
+  if (path === 'config.json') return d.config;
+  if (path.startsWith('chats/')) return d.chats[path.slice(6, -5)];
+  return d.months[path.slice(7, -5)];
+}
 
 export function describe(a: Action): string {
+  if (a.label) return a.label;
   switch (a.type) {
     case 'setConfig': return a.message;
     case 'openMonth': return `${a.id}: open month`;
@@ -113,5 +135,8 @@ export function describe(a: Action): string {
     case 'setChecks': return `${a.m}: monthly checks`;
     case 'close': return `${a.m}: close month`;
     case 'putMonth': return `${a.month.id}: restore from export`;
+    case 'addNote': return `${a.m}: note`;
+    case 'restoreData': return 'Undo previous change';
+    case 'putChats': return `chat: save ${a.file.id}`;
   }
 }
