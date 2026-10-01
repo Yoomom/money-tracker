@@ -20,6 +20,8 @@ jobs:
           node-version: lts/*
           cache: npm
       - run: npm ci
+      - name: No pay-per-use AI in the app
+        run: '! grep -rEn "api\.anthropic\.com|x-api-key" src index.html --exclude=ai.test.ts'
       - run: npm test
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3

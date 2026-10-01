@@ -27,7 +27,7 @@ export const TOOL_DEFS = [
   { name: 'run_health', description: 'The 12 health checks for a month.', input_schema: { type: 'object', properties: { monthId: str } } },
   { name: 'simulate_purchase', description: 'What-if: effect of a purchase paid from a fund, or on instalment, on funds, emergency-fund months and health checks. Nothing is saved.', input_schema: { type: 'object', properties: { rm: num, from: { ...str, description: 'a fundId, or "instalment"' }, months: { ...num, description: 'instalment length in months' } }, required: ['rm', 'from'] } },
   { name: 'log_surprise', description: 'PROPOSE logging a big surprise expense. paidFrom: a fundId, a pocketId, "surplus" or "unassigned".', input_schema: { type: 'object', properties: { date: { ...str, description: 'YYYY-MM-DD' }, what: str, rm: num, paidFrom: str, emergency: { type: 'boolean', description: 'true only for a real emergency drawn from the emergency fund' } }, required: ['date', 'what', 'rm', 'paidFrom'] } },
-  { name: 'set_actual_income', description: 'PROPOSE recording income. source "salary" replaces the month salary and rebalances %-items and the remainder.', input_schema: { type: 'object', properties: { monthId: str, source: { type: 'string', enum: ['salary', 'creator', 'freelance', 'other'] }, rm: num, date: str, stream: str }, required: ['source', 'rm'] } },
+  { name: 'set_income', description: 'PROPOSE recording income. source "salary" replaces the month salary and rebalances %-items and the remainder.', input_schema: { type: 'object', properties: { monthId: str, source: { type: 'string', enum: ['salary', 'creator', 'freelance', 'other'] }, rm: num, date: str, stream: str }, required: ['source', 'rm'] } },
   { name: 'update_item_rule', description: 'PROPOSE changing a plan item amount rule. Rejected if it would push the remainder below 0.', input_schema: { type: 'object', properties: { itemId: str, rule: ruleSchema, applyToCurrentMonth: { type: 'boolean', description: 'default true' } }, required: ['itemId', 'rule'] } },
   { name: 'add_item', description: 'PROPOSE adding a plan item.', input_schema: { type: 'object', properties: { pocketId: str, name: str, rule: ruleSchema, fundId: str, applyToCurrentMonth: { type: 'boolean' } }, required: ['pocketId', 'name', 'rule'] } },
   { name: 'remove_item', description: 'PROPOSE removing a plan item (not the remainder item).', input_schema: { type: 'object', properties: { itemId: str, applyToCurrentMonth: { type: 'boolean' } }, required: ['itemId'] } },
@@ -36,7 +36,7 @@ export const TOOL_DEFS = [
   { name: 'add_month_note', description: 'PROPOSE adding a note to a month.', input_schema: { type: 'object', properties: { monthId: str, text: str }, required: ['text'] } },
 ] as const;
 
-export const WRITE_TOOLS = new Set(['log_surprise', 'set_actual_income', 'update_item_rule', 'add_item', 'remove_item', 'move_between_funds', 'mark_payday_item', 'add_month_note']);
+export const WRITE_TOOLS = new Set(['log_surprise', 'set_income', 'update_item_rule', 'add_item', 'remove_item', 'move_between_funds', 'mark_payday_item', 'add_month_note']);
 export const isWriteTool = (n: string) => WRITE_TOOLS.has(n);
 
 // ───────────── helpers
@@ -175,7 +175,7 @@ export function planWriteTool(name: string, input: any, d: Data, today: string):
       const src = c.funds.find((f) => f.id === paidFrom)?.name ?? paidFrom;
       return { summary: `Log "${input.what}" ${fmtRM(rm)} from ${src}`, actions: [{ type: 'logSurprise', m: mId, s: { id: newId('sp'), date, what: String(input.what), rm, paidFrom, emergency: !!input.emergency } }] };
     }
-    case 'set_actual_income': {
+    case 'set_income': {
       const mId = input.monthId ?? cur; needMonth(d, mId, today);
       const rm = posRm(input.rm);
       if (input.source === 'salary') return { summary: `Set ${mId} salary to ${fmtRM(rm)}`, actions: [{ type: 'setSalary', m: mId, rm }] };
