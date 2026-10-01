@@ -18,21 +18,19 @@ Decisions taken without asking, and why.
 
 - **History rewrite was blocked.** While pushing the first commits I noticed one test line in an early commit of the public repo used a real emergency-fund balance as a test number. It is already replaced in the latest code, but it remains in the earlier commit's history. Rewriting history needs a force-push, which the safety layer denied, so I left it. It is a single balance figure with no name or account attached. If you want it gone: delete and recreate `money-tracker` (it has no data, only code), or ask Claude Code to rewrite history with your explicit OK.
 
-## Update 1: Ask chat (Phase 8) and Claude app connector (Phase 9)
+## Update 2: subscription-only chat (replaces Update 1)
 
 | Decision | Why |
 |---|---|
-| `output_config.effort` confirmed valid for `claude-sonnet-5-5` in the current docs, so it is sent as specified (default `medium`). The client retries once without it if the API ever rejects it. | Spec 2.2 |
-| `max_tokens` is 8000, not 4000 | Thinking tokens count toward `max_tokens`; 4000 could cut an answer short |
-| Thinking blocks are kept and sent back unchanged in tool loops | The API requires it when thinking is on |
-| Screens live in `src/ui/` (matching the existing app), not `src/screens/` | Consistency with phases 1–7 |
-| Chats are saved to `money-data/chats/YYYY-MM.json` through the same autosave/sha-retry store as other data | Spec 2.6 |
-| Undo restores the files a change touched. Shown straight away, with a confirm after 30 s | Spec 2.5 |
-| `index.html` has a Content-Security-Policy: `connect-src` allows only `api.github.com` and `api.anthropic.com` | Spec 2.8; verified in the browser (no violations) |
-| Live Anthropic smoke test skipped | `ANTHROPIC_API_KEY` is not set on this Mac and must never be asked for |
-| Phase 9 built and tested, **not deployed** | `wrangler whoami`: not authenticated |
-| The Cloudflare template flag did not apply (it produced a hello-world Worker), so the connector was written directly on `workers-oauth-provider` 1.2.1 + `agents` (McpAgent) with the same OAuth shape as the template | Offline-safe, tested at protocol level |
-| Only `/mcp` (streamable HTTP) is served, no `/sse` | The OAuth library requires every protected route to sit under the canonical resource path |
-| The OAuth provider is built per origin on first request | The public workers.dev URL is not known until you deploy |
-| Connector access is limited to GitHub login `yoomom` twice: at the OAuth callback and again when tools are registered | Spec 3 |
-| `money-mcp` has its own copy of the shared code under `src/shared/` (`npm run sync` refreshes it) | Spec 3 "copied or shared" |
+| Removed everything Update 1 built that needed an API key: the Anthropic client, cost/cap, API-key settings, chat loop, mock API tests, and the `api.anthropic.com` CSP entry. History still has those commits. | Spec update 2, section 0b |
+| Kept and renamed the reusable core: `context.ts` → `snapshot.ts`, `systemPrompt.ts` → `coach.ts`, `proposals.ts` → `changes.ts`; `tools.ts` stays as the shared tool layer | Section 0b |
+| Tool `set_actual_income` renamed `set_income` (the old name is still accepted when pasting changes) | Spec change types |
+| Snapshot is compact (about 6k characters with 7 months of data; under 12k is enforced by dropping the oldest months first) | Fits the 14,000-character desktop link |
+| The format example inside the prompt uses placeholders that fail validation, and the parser takes the last `money-changes` block | Pasting the prompt back by mistake can never apply a change |
+| Phone: copy + open claude.ai/new. Mac desktop: `claude://` link (also copies as a fallback). iPad is treated as a phone | Section 3.1 |
+| Last 10 applied change sets are kept on the device with undo (confirm after 30 s) | "Undo (30 s, and in History)" |
+| CI step fails the build if `api.anthropic.com` or `x-api-key` appears in `src/` or `index.html`; a unit test checks the same | Acceptance section 4 |
+| Connector: the OAuth library already handles cookies and state, so the spec's `COOKIE_ENCRYPTION_KEY` secret is not needed | Library v1.2 consent flow |
+| Connector: undo keeps the last 20 inverses in KV | Spec 2.2 |
+| Connector **not deployed**: `npx wrangler whoami` says not authenticated | Spec 2.3 |
+| Added `npm run go-live` in `money-mcp` (login, deploy, then it asks for the three secrets) | "One command from live" |

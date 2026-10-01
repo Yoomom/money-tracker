@@ -37,39 +37,34 @@
 
 ---
 
-# Update 1: Ask chat and Claude app connector
+# Update 2: talk to Claude about your money (subscription only, no API key, no extra cost)
 
-## What was built and checked
+Update 1 (the API-key chat) was removed. Nothing in the app calls any AI service; a CI check enforces it.
 
-**Ask tab (live now, needs your API key):** a 5th tab. Claude Sonnet 5.5 at medium effort answers from your real plan, funds, months and health checks, using tools to look things up. It can propose changes (log a surprise, change a rule, move money between funds, tick a payday item, record income, add a note). Each shows a before/after card with **Apply** / **Dismiss**, and **Undo** after applying. Chats are saved to `money-data/chats/`. Cost is shown under each answer, and there is a monthly cap (default US$5).
+## What was built
+
+**Ask Claude tab (live now, nothing to set up):** type or tap a question, tap **Ask Claude**. The app packs the coach instructions, a compact snapshot of your data and your question, copies it, and opens claude.ai (on a Mac with Claude Desktop it opens a `claude://` link instead). Paste, send. If Claude ends with a `money-changes` block, copy the reply and tap **Paste Claude's changes**: you get a before/after preview, then **Apply** or **Dismiss**, and **Undo** afterwards (also under Recent changes). Nothing leaves your device except via your clipboard.
+
+**Money connector (built, not deployed):** a Cloudflare Worker in `money-mcp` (private repo `Yoomom/money-mcp`) so the Claude app itself (phone or Mac) can read and update your data. GitHub login, only `yoomom` allowed. It reads and writes `money-data` through its own token, commits as `claude-app: …`, and has `undo_last_change` (last 20) plus `coach`, `monthly_review` and `can_i_afford` prompts.
 
 | Check | Result |
 |---|---|
-| Unit tests (snapshot has no secrets and is far under 60k tokens, every tool, apply/undo, balanced-plan rule, cost maths, SSE parsing, tool loop) | PASS (50 in the app) |
-| Browser flow at 375×812 with a mocked AI: quick prompt → tool chip → answer → proposal card → Apply changes Funds → Undo restores | PASS |
-| Send is disabled offline; no horizontal scroll at 360px; no CSP violations | PASS |
-| Live regression of the original app (connect, tick, surprise, offline) after the update | PASS |
-| Live call to the Claude API | **Not run**: no `ANTHROPIC_API_KEY` on this Mac (never asked for one) |
-| `?demo=1` Ask uses a canned conversation | yes, no real data on the public site |
+| Unit tests in the app (snapshot size and no secrets, tools, parsing valid/invalid/missing blocks, validate, apply, undo, prompt pasted back by mistake is harmless, no AI-API strings in src) | PASS (51) |
+| Browser flow at 375×812: Ask → clipboard has coach prompt, data, schema and question → claude.ai opens → paste a reply → preview → Apply changes Funds → Undo restores | PASS |
+| Bad paste shows a clear error; no CSP violations; no horizontal scroll at 360px; no request to any AI API | PASS |
+| Connector unit tests against a fake GitHub (8): tools, reads, direct write with a `claude-app:` commit, undo stack, balance rule, sha-conflict retry, prompts, owner-only check | PASS |
+| MCP Inspector CLI against a local fake repo: list 15 tools, `get_overview`, `log_surprise`, `undo_last_change` | PASS |
+| `wrangler dev`: unauthenticated `/mcp` returns 401, OAuth discovery, client registration and the consent page work; `wrangler deploy --dry-run` bundles | PASS |
+| Deployed to Cloudflare | **No**: `npx wrangler whoami` says not logged in |
 
-**Claude app connector (built, tested, NOT deployed):** repo `Yoomom/money-mcp` (private). Tested at the MCP protocol level against an in-memory repo (6 tests: tools list, reads, direct writes with `claude-app:` commits, undo, balance rule, sha-conflict retry, owner-only check). `wrangler dev` showed the OAuth discovery, client registration and consent page working, and `wrangler deploy --dry-run` bundles. `wrangler whoami` said not logged in, so it stops here.
+## Your steps (connector, about 10 minutes, once, optional)
 
-## Your steps
-
-### 1. Ask tab (about 3 minutes)
-1. Go to platform.claude.com → create a workspace named `money-tracker` → set a monthly spend limit (US$10 suggested) → add credits → create an API key in that workspace.
-2. In the app: **Ask** tab (or Plan → Ask (Claude)) → paste the key → **Test**.
-The key stays on your phone only. Each phone/browser needs it once. This is pay-per-use API billing, separate from your Claude subscription.
-
-### 2. Claude app connector (about 10 minutes, optional)
-In a terminal on the Mac, in `~/Repositories/Financial Planner/money-mcp`:
-1. `npx wrangler login`
-2. `npx wrangler deploy`. Note the URL `https://money-mcp.<your-subdomain>.workers.dev`.
-3. GitHub → Settings → Developer settings → OAuth Apps → New OAuth App. Homepage = the Worker URL. Authorization callback URL = `<Worker URL>/callback`. Copy the Client ID, generate a Client secret.
-4. `npx wrangler secret put GITHUB_CLIENT_ID` then `npx wrangler secret put GITHUB_CLIENT_SECRET` (paste when asked).
-5. Create a second fine-grained token the same way as the phone one (only `money-data`, Contents: read and write), then `npx wrangler secret put GITHUB_TOKEN`.
-6. In Claude (web, desktop or phone): Settings → Connectors → **Add custom connector** → paste `<Worker URL>/mcp` → sign in with GitHub as `yoomom`. Anyone else is rejected.
-7. Create a Claude **Project** called "Money coach", enable the Money Tracker connector in it, and paste this as the project instructions:
+1. In a terminal: `cd ~/Repositories/Financial\ Planner/money-mcp && npm run go-live`
+   - It opens the Cloudflare login (free account, no card), deploys, and prints your Worker URL `https://money-mcp.<subdomain>.workers.dev`.
+2. It then opens GitHub's new OAuth App page. Homepage = the Worker URL, callback = `<Worker URL>/callback` (the script prints both). Create it, generate a client secret, and paste the ID and secret into the script when asked.
+3. Create a token for the connector the same way as the phone one (only `money-data`, Contents read and write; 1 year) using the link in step 1 above, and paste it into the script. It sets the three secrets for you.
+4. claude.ai (or the app) → Settings → Connectors → **Add custom connector** → name `Money`, URL `<Worker URL>/mcp` → sign in with GitHub as `yoomom`. It then appears in the phone app too.
+5. Optional: create a Claude Project "Money coach" and paste this as its instructions (or just use the connector's `coach` prompt):
 
 ~~~
 You are Shaq's money coach. His money tracker is connected as the "Money Tracker" connector. Currency is Malaysian ringgit (RM). Think in a Malaysian context: EPF, ASB/ASNB, PTPTN, LHDN reliefs.
@@ -91,6 +86,8 @@ How to answer:
 - You are not a licensed financial adviser. Say so once per thread, only when giving investment-type views.
 ~~~
 
-## Needs your attention
-- Ask and the connector both write to `money-data`. Commit messages start with `chat:` (website) and `claude-app:` (connector), so you can tell them apart in the repo history.
-- The earlier note about one real balance figure in the public repo's early history still stands (see above).
+Add a calendar reminder to renew this second token in a year as well.
+
+## Notes
+- The website's Ask Claude and the connector both work on the same `money-data`. Commit messages start with `ask:` (website) and `claude-app:` (connector).
+- The earlier note about one real balance figure in the public repo's early history still stands.

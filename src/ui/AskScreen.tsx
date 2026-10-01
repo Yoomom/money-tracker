@@ -94,7 +94,7 @@ export function AskScreen() {
           <textarea value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="e.g. Can I afford RM800 for a new mic?" /></label>
         <button className="primary" style={{ width: '100%' }} onClick={() => void ask()}>Ask Claude</button>
         {note && <p role="status" className="muted">{note}</p>}
-        <p className="muted">Faster: ask in the Claude app with the Money connector on (see Plan setup notes).</p>
+        <p className="muted">Faster: ask in the Claude app with the Money connector turned on.</p>
       </div>
 
       <h2>Apply Claude's changes</h2>
