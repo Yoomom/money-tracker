@@ -16,7 +16,7 @@ export interface ImportResult {
 }
 
 export function readWorkbook(data: ArrayBuffer | Uint8Array): XLSX.WorkBook {
-  return XLSX.read(data, { type: 'array', cellFormula: true, cellDates: true });
+  return XLSX.read(data, { type: 'array', cellFormula: true });
 }
 
 type WS = XLSX.WorkSheet;
@@ -91,8 +91,14 @@ function parseFormatA(wb: XLSX.WorkBook, classifier: Classifier): Omit<ImportRes
         else if (/emergency fund target/i.test(label) && typeof v.v === 'number') inputs.efTargetMonths = v.v;
         else if (/emergency fund balance/i.test(label) && typeof v.v === 'number') inputs.emergencyOpening = v.v;
         else if (/plan start/i.test(label)) {
-          if (v.v instanceof Date) inputs.openingDate = `${v.v.getFullYear()}-${String(v.v.getMonth() + 1).padStart(2, '0')}-01`;
-          else if (typeof v.v === 'string') { const d = new Date(`1 ${v.v}`); if (!isNaN(+d)) inputs.openingDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`; }
+          // Excel dates are timezone-free serial numbers; read y/m straight from the serial.
+          if (typeof v.v === 'number') {
+            const d = XLSX.SSF.parse_date_code(v.v);
+            if (d) inputs.openingDate = `${d.y}-${String(d.m).padStart(2, '0')}-01`;
+          } else if (typeof v.v === 'string') {
+            const d = new Date(`1 ${v.v}`);
+            if (!isNaN(+d)) inputs.openingDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+          }
         }
       }
     }

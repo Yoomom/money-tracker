@@ -42,7 +42,7 @@ const plan: [string, string, number, string?][] = [
 const A: Record<string, Cell> = {
   A1: 'Money Plan', A3: 'Take-home salary (RM)', B3: 4000, A4: 'Giving % of income', B4: 0.025,
   A5: 'Emergency fund target (months of fixed costs)', B5: 6, A6: 'Emergency fund balance now (RM)', B6: 3000,
-  A7: 'Plan start month', B7: new Date(2026, 9, 1),
+  A7: 'Plan start month', B7: Date.UTC(2026, 9, 1) / 86400000 + 25569,
   A8: 'Pocket', B8: 'Item', C8: 'Planned (RM)',
 };
 plan.forEach(([pocket, item, amt, f], i) => {
