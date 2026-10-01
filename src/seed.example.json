@@ -1,0 +1,34 @@
+{
+  "version": 1, "currency": "MYR",
+  "takeHome": 4000, "gross": null, "givingPct": 0.025, "efTargetMonths": 6,
+  "pockets": [
+    {"id":"give","name":"Give","kind":"give","order":1},
+    {"id":"fixed","name":"Fixed needs","kind":"fixed","order":2},
+    {"id":"sinking","name":"Sinking funds","kind":"sinking","order":3},
+    {"id":"business","name":"Creator business","kind":"business","order":4},
+    {"id":"safety","name":"Safety then wealth","kind":"safety","order":5},
+    {"id":"guiltfree","name":"Guilt-free","kind":"guiltfree","order":6}
+  ],
+  "items": [
+    {"id":"charity","pocketId":"give","name":"Charity","rule":{"type":"percentOfIncome","pct":0.025}},
+    {"id":"car-loan","pocketId":"fixed","name":"Car loan","rule":{"type":"fixed","rm":400}},
+    {"id":"car-insurance","pocketId":"fixed","name":"Car insurance","rule":{"type":"yearly","rmPerYear":1800}},
+    {"id":"petrol","pocketId":"fixed","name":"Petrol","rule":{"type":"fixed","rm":200}},
+    {"id":"road-tax","pocketId":"fixed","name":"Road tax","rule":{"type":"yearly","rmPerYear":90}},
+    {"id":"phone","pocketId":"fixed","name":"Phone bill","rule":{"type":"fixed","rm":70}},
+    {"id":"food","pocketId":"fixed","name":"Food","rule":{"type":"fixed","rm":500}},
+    {"id":"car-wear","pocketId":"sinking","name":"Car wear & tear","rule":{"type":"fixed","rm":50},"fundId":"car-wear"},
+    {"id":"gifts","pocketId":"sinking","name":"Gifts & family occasions","rule":{"type":"fixed","rm":100},"fundId":"gifts"},
+    {"id":"tools","pocketId":"business","name":"Business tools","rule":{"type":"fixed","rm":150}},
+    {"id":"recreation","pocketId":"guiltfree","name":"Recreation","rule":{"type":"fixed","rm":300}},
+    {"id":"ef-topup","pocketId":"safety","name":"Emergency fund top-up","rule":{"type":"fixed","rm":600},"fundId":"emergency"},
+    {"id":"invest","pocketId":"safety","name":"Long-term investing","rule":{"type":"remainder"},"fundId":"invest"}
+  ],
+  "funds": [
+    {"id":"emergency","name":"Emergency fund","kind":"emergency","opening":3000,"openingDate":"2026-10-01"},
+    {"id":"car-wear","name":"Car wear & tear","kind":"sinking","opening":0,"openingDate":"2026-10-01"},
+    {"id":"gifts","name":"Gifts & family","kind":"sinking","opening":0,"openingDate":"2026-10-01"},
+    {"id":"invest","name":"Long-term investing","kind":"invest","opening":0,"openingDate":"2026-10-01"},
+    {"id":"runway","name":"Runway fund","kind":"runway","target":30000,"opening":0,"openingDate":"2026-10-01"}
+  ]
+}

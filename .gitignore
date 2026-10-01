@@ -1,0 +1,7 @@
+node_modules
+dist
+out
+SPEC.md
+*.xlsx
+!fixtures/*.xlsx
+.env*
