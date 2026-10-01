@@ -7,6 +7,7 @@ Phone-first PWA: "Am I on track this month?" Vite + React + TS. Data lives in a 
 - `npm test` — Vitest (domain logic, importer)
 - `npm run build` — typecheck + production build
 - `npm run lint`
+- `node scripts/e2e-ask.mjs` — Ask flow against `vite preview` (demo mode, mock AI)
 - `GH_TOKEN=$(gh auth token) node scripts/e2e.mjs` — live Playwright check + demo screenshots
 - `npm run make-fixtures` — regenerate dummy xlsx fixtures
 - `npm run import -- <file.xlsx>` — run the importer in Node, writes JSON to ./out/ (git-ignored)

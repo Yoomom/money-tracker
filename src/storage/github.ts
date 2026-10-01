@@ -56,7 +56,7 @@ export class GitHubClient {
     const res = await this.call(this.url(path));
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`GitHub said ${res.status}`);
-    const j = await res.json();
+    const j = (await res.json()) as any;
     return { content: fromBase64(j.content), sha: j.sha };
   }
 
@@ -65,7 +65,7 @@ export class GitHubClient {
     const res = await this.call(this.url(dir));
     if (res.status === 404) return [];
     if (!res.ok) throw new Error(`GitHub said ${res.status}`);
-    const j = await res.json();
+    const j = (await res.json()) as any;
     return Array.isArray(j) ? j.filter((f: any) => f.type === 'file') : [];
   }
 
@@ -76,7 +76,7 @@ export class GitHubClient {
     });
     if (res.status === 409 || res.status === 422) throw new ConflictError();
     if (!res.ok) throw new Error(`GitHub said ${res.status}`);
-    const j = await res.json();
+    const j = (await res.json()) as any;
     return j.content.sha;
   }
 
