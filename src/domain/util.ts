@@ -26,3 +26,11 @@ export const todayISO = () => {
 };
 export const slug = (s: string) =>
   s.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'item';
+
+/** Parse "1,234.50", "RM 20", "20" → number; undefined if not numeric. */
+export function parseNum(s: string): number | undefined {
+  const t = s.replace(/[^0-9.-]/g, '');
+  if (t === '' || t === '-' || t === '.') return undefined;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : undefined;
+}

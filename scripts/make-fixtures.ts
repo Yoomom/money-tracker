@@ -6,11 +6,12 @@ import { mkdirSync } from 'node:fs';
 XLSX.set_fs(fs);
 
 type C = { v?: string | number | Date; f?: string };
-function sheet(cells: Record<string, C | string | number>): XLSX.WorkSheet {
+type Cell = C | string | number | Date;
+function sheet(cells: Record<string, Cell>): XLSX.WorkSheet {
   const ws: XLSX.WorkSheet = {};
   let maxR = 0, maxC = 0;
   for (const [a, raw] of Object.entries(cells)) {
-    const c: C = typeof raw === 'object' && !(raw instanceof Date) ? raw : { v: raw as any };
+    const c: C = typeof raw === 'object' && !(raw instanceof Date) ? raw : { v: raw };
     const { r, c: cc } = XLSX.utils.decode_cell(a);
     maxR = Math.max(maxR, r); maxC = Math.max(maxC, cc);
     const t = c.v instanceof Date ? 'd' : typeof c.v === 'number' ? 'n' : 's';
@@ -38,7 +39,7 @@ const plan: [string, string, number, string?][] = [
   ['', 'Long-term investing', 1372.5, '=B3-SUM(C9:C20)'],
   ['6. Guilt-free', 'Recreation', 300],
 ];
-const A: Record<string, C | string | number> = {
+const A: Record<string, Cell> = {
   A1: 'Money Plan', A3: 'Take-home salary (RM)', B3: 4000, A4: 'Giving % of income', B4: 0.025,
   A5: 'Emergency fund target (months of fixed costs)', B5: 6, A6: 'Emergency fund balance now (RM)', B6: 3000,
   A7: 'Plan start month', B7: new Date(2026, 9, 1),
@@ -54,7 +55,7 @@ A[`B${9 + plan.length}`] = 'Total';
 A[`C${9 + plan.length}`] = 4000;
 
 // ── Format B: older "Actual Budgeting" layout (dummy, same quirks: summary copies, combined rows, duplicate)
-const B: Record<string, C | string | number> = {
+const B: Record<string, Cell> = {
   A1: 'Total Nett Salary: ', B1: 4000, D1: 'Remaining:', E1: { v: 769.16, f: 'B1-D3' },
   A5: 'Pocket', B5: 'Amount (RM)', C5: 'Yearly (RM)',
   A6: 'Therapy', B6: 300, C6: { v: 3600, f: 'B6*12' },

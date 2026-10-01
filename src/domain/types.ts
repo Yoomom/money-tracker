@@ -19,7 +19,7 @@ export interface Config {
   takeHome: number; gross?: number | null;
   givingPct: number; efTargetMonths: number;
   pockets: Pocket[]; items: PlanItem[]; funds: Fund[];
-  classifier?: Record<string, string[]>;
+  classifier?: Record<PocketKind, string[]>;
 }
 
 export interface IncomeEntry {

@@ -31,7 +31,7 @@ export function openMonth(config: Config, id: string, prev?: Month, actualSalary
   if (withdrawn > 0 && emergencyFund) {
     month.items.push({
       itemId: REFILL_ID, planned: withdrawn, done: false, fundId: emergencyFund.id,
-      name: 'Refill emergency fund', oneOff: true,
+      name: 'Refill emergency fund', pocketId: 'safety', oneOff: true,
     });
     month = rebalance(month, config).month;
   }

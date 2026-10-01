@@ -77,7 +77,7 @@ describe('Format B (Actual Budgeting)', () => {
     expect(res.warnings.join(' ')).toMatch(/gap RM100\.00/);
   });
   it('after resolving, total = salary − remaining and everything is placed', () => {
-    let rows = removeRow(res.rows, res.rows.find((r) => r.name === 'AI')!.key);
+    const rows = removeRow(res.rows, res.rows.find((r) => r.name === 'AI')!.key);
     const total = rows.reduce((a, r) => a + r.amount, 0);
     expect(total).toBeCloseTo(4000 - 769.16, 1);
     const split = splitRow(rows, rows.find((r) => r.name === 'Electric and Donate')!.key);
@@ -108,11 +108,11 @@ describe('re-import diff', () => {
     const first = buildConfig(a.rows, a.inputs).config;
     const rows2 = removeRow(a.rows, a.rows.find((r) => r.name === 'Phone bill')!.key).map((r) => (r.name === 'Petrol' ? { ...r, amount: 250, rule: { type: 'fixed' as const, rm: 250 } } : r));
     rows2.push({ key: 'n', name: 'Gym', kind: 'guiltfree', amount: 50, rule: { type: 'fixed', rm: 50 }, flags: [] });
-    const next = buildConfig(rows2, a.inputs, { existing: { ...first, funds: first.funds.map((f) => (f.id === 'emergency' ? { ...f, opening: 4700 } : f)) } });
+    const next = buildConfig(rows2, a.inputs, { existing: { ...first, funds: first.funds.map((f) => (f.id === 'emergency' ? { ...f, opening: 5200 } : f)) } });
     const d = diffConfigs(first, next.config);
     expect(d.added.join()).toContain('Gym');
     expect(d.removed.join()).toContain('Phone bill');
     expect(d.changed.join()).toContain('Petrol');
-    expect(next.config.funds.find((f) => f.id === 'emergency')!.opening).toBe(4700);
+    expect(next.config.funds.find((f) => f.id === 'emergency')!.opening).toBe(5200);
   });
 });
